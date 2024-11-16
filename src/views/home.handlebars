@@ -28,49 +28,58 @@
 
 <a href="/?page={{totalPages}}">Ult.Pag</a>
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Ver si hay un carrito en el local storage
     let idCarrito = localStorage.getItem("idCarrito");
-    
-    if(idCarrito){
-      const carrito = document.querySelector(".linkCarrito");
-      carrito.href = `/carritoUser/${idCarrito}`;
-    }else{
-        if(!idCarrito){
-        alert("Debe proporcionar un ID, para poder comprar.")
-        return
+    if (!idCarrito) {
+      idCarrito = prompt("Por favor, introduce el ID de tu carrito:");
+      if (!idCarrito) {
+        alert("Debe proporcionar un ID para continuar.");
+        return;
+      }
+    }
+
+    try {
+      const respuesta = await fetch(`/api/carritos/${idCarrito}`);
+      if (!respuesta.ok) {
+        alert("El carrito no existe, por lo que no podrá usar el carrito.");
+        return;
       }
       localStorage.setItem("idCarrito", idCarrito);
-    }
-    
-    document.querySelectorAll(".add-to-cart").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const idProducto = button.getAttribute("data-id");
-
-        if (!idProducto) {
-          alert("Error: no se encontró el ID del producto.");
-          return;
-        }
-
-        try {
-          const respuesta = await fetch(`/api/carritos/${idCarrito}/producto/${idProducto}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (respuesta.ok) {
-            alert("Producto añadido al carrito");
-          } else {
-            const error = await respuesta.json();
-            console.error("Error al añadir producto:", error , error.message);
-            alert("No se pudo añadir el producto al carrito.");
+      const carritoLink = document.querySelector(".linkCarrito");
+      if (carritoLink) {
+        carritoLink.href = `/carritoUser/${idCarrito}`;
+      }
+      document.querySelectorAll(".add-to-cart").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const idProducto = button.getAttribute("data-id");
+          if (!idProducto) {
+            alert("Error: no se encontró el ID del producto.");
+            return;
           }
-        } catch (error) {
-          console.error("Error al conectar con el servidor:", error);
-          alert("Hubo un error al conectar con el servidor.");
-        }
+          try {
+            const respuesta = await fetch(`/api/carritos/${idCarrito}/producto/${idProducto}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            if (respuesta.ok) {
+              alert("Producto añadido al carrito.");
+            } else {
+              const error = await respuesta.json();
+              console.error("Error al añadir producto:", error, error.message);
+              alert("No se pudo añadir el producto al carrito.");
+            }
+          } catch (error) {
+            console.error("Error al conectar con el servidor:", error.message);
+            alert("Hubo un error al conectar con el servidor.");
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error("Error al verificar el carrito:", error.message);
+      alert("Hubo un error al verificar el carrito.");
+    }
   });
 </script>

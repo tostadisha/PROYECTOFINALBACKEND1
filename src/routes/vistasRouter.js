@@ -10,7 +10,6 @@ router.get("/", async (req, res) => {
   
   try {
     const { docs: productos, totalPages, hasNextPage, hasPrevPage, prevPage, nextPage} = await ProductosManager.getProducts(limit, page, filter, sort);
-    console.log(hasNextPage, prevPage, nextPage, page);
     res.render("home", {
       productos,
       totalPages,

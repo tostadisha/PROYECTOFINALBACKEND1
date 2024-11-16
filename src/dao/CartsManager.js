@@ -9,11 +9,48 @@ export class CarritosManager {
   }
   // Para conseguir el carrito en crudo, sin el populate
   static async getById(id) {
-    return carritosModelo.findOne({ _id: id });
+    try {
+      if(!mongoose.Types.ObjectId.isValid(id)){
+        throw new Error ("El id ingresado es inválido")
+      }
+      const carritoBuscado = carritosModelo.findOne({ _id: id });
+      if(!carritoBuscado){
+        throw new Error ("Ese carrito no existe")
+      }
+      return carritoBuscado
+    } catch (error) {
+      return {error: error.message}
+    }
   }
   // Para conseguir el carrito con la informacion de los respectivos productos
   static async findById(id) {
-    return carritosModelo.findById({ _id: id }).populate("productos.id");
+    try {
+      if(!mongoose.Types.ObjectId.isValid(id)){
+        throw new Error ("El id ingresado es inválido")
+      }
+      const carritoBuscado = carritosModelo.findById({ _id: id }).populate("productos.id");
+      if(!carritoBuscado){
+        throw new Error ("Ese carrito no existe")
+      }
+      return carritoBuscado
+    } catch (error) {
+      return {error: error.message}
+    }
+  }
+  // Borrar un carrito
+  static async deleteById(id){
+    try {
+      if(!mongoose.Types.ObjectId.isValid(id)){
+        throw new Error ("El id ingresado es inválido")
+      }
+      const carritoBorrado = await carritosModelo.deleteOne({ _id : id })
+      if(carritoBorrado.deletedCount == 0){
+        throw new Error ("Ese carrito no existe")
+      }
+      return { message: "El carrito fue borrado con éxito!"}
+    } catch (error) {
+      return {error: error.message}
+    }
   }
   // Para actualizar algun producto de un carrito
   static async updateCarrito(idCarrito, idProducto) {
@@ -28,16 +65,21 @@ export class CarritosManager {
     }
   }
   // Eliminar un item del carrito (entero)
-  static async removeProductFromCart(idCarrito, idProducto) {
-    const carrito = await this.getById(idCarrito);
-    if (!carrito) throw new Error("Carrito no encontrado.");
-    const productExist = carrito.productos.some((p) => p.id.equals(idProducto));
-    if (!productExist) throw new Error("Producto no encontrado en el carrito.");
-    return await carritosModelo.findByIdAndUpdate(
-    idCarrito,
-    { $pull: { productos: { id: idProducto } } },
-    { new: true }
-);
+  static async removeProductFromCarrito(idCarrito, idProducto) {
+    try{
+      const carrito = await this.getById(idCarrito);
+      if (!carrito) throw new Error("Carrito no encontrado.");
+      const productExist = carrito.productos.some((p) => p.id.equals(idProducto));
+      if (!productExist) throw new Error("Producto no encontrado en el carrito.");
+      return await carritosModelo.findByIdAndUpdate(
+      idCarrito,
+      { $pull: { productos: { id: idProducto } } },
+      { new: true }
+  );
+   }catch(error){
+  return {error: error.message}
+   }
+    
 
   }
   // Recibir un nuevo carrito y modificar el carrito especificado
@@ -51,29 +93,22 @@ export class CarritosManager {
     );
   }
   // Cambiar la quantity de un producto que está en el carrito
-  static async changeQuantityFromCart(idCarrito, idProducto, quantity) {
+  static async changeQuantityFromCarrito(idCarrito, idProducto, quantity) {
     try {
       let carritoActual = await this.getById(idCarrito);
-      console.log(`El carrito actual es ${carritoActual}`)
       let productExist = carritoActual.productos.find((e) =>
         e.id.equals(idProducto)
       );
-      console.log(`El valor de product exist es: ${productExist}`)
-
       if (productExist) {
         productExist.cantidad = quantity;
         await carritoActual.save();
       } else {
-        console.log("Producto no encontrado en el carrito");
+        throw new Error("Producto no encontrado en el carrito")
       }
 
       return carritoActual;
     } catch (error) {
-      console.error(
-        "Error al cambiar la cantidad del producto en el carrito:",
-        error
-      );
-      throw error;
+      return {error : error.message}
     }
   }
 }

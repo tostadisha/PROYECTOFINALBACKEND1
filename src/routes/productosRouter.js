@@ -17,7 +17,6 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { body } = req;
-    console.log(body);
     const response = await ProductosManager.createProduct(body);
     res.setHeader("Content-type", "application/json");
     return res.status(200).send(`Su producto ha sido creado con éxito, este es:

@@ -15,6 +15,18 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: `` });
   }
 });
+// Borrar un carrito
+router.delete("/:cid", async(req,res)=>{
+  const { cid } = req.params
+try {
+  let carritoBorrado = await CarritosManager.deleteById(cid)
+  res.setHeader('Content-type', 'application/json')
+  return res.status(200).send(carritoBorrado)
+} catch (error) {
+  res.setHeader('Content-Type', 'application/json');
+  return res.status(400).json({error:error.message})
+}
+});
 // Añadir producto al carrito seleccionado
 router.post("/:cid/producto/:pid", async (req, res) => {
   let { cid, pid } = req.params;
@@ -99,7 +111,7 @@ router.delete("/:cid/producto/:pid", async (req, res) => {
       return res.status(400).json({ error: `Su carrito no existe` });
     }
 
-    let carritoActualizado = await CarritosManager.removeProductFromCart(
+    let carritoActualizado = await CarritosManager.removeProductFromCarrito(
       cid,
       pid
     );
@@ -120,7 +132,7 @@ router.put("/:cid/productos/:pid", async (req, res) => {
   let { cid, pid } = req.params;
   let { quantity } = req.body;
   try {
-    let carrito = await CarritosManager.changeQuantityFromCart(
+    let carrito = await CarritosManager.changeQuantityFromCarrito(
       cid,
       pid,
       quantity

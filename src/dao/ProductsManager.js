@@ -21,21 +21,29 @@ export class ProductosManager {
   }
   // Cambiar los datos de algún producto
   static async updateOneProduct(productoModificado, id) {
-    if(mongoose.Types.ObjectId.isValid(id)){
-      return await productosModelo.updateOne({ _id: id }, productoModificado);
+    try {
+      if(!mongoose.Types.ObjectId.isValid(id)){
+        throw new Error("El ID proporcionada no es válida")
+      }
+        return await productosModelo.updateOne({ _id: id }, productoModificado);
+    } catch (error) {
+      return {error: error.message}
     }
   }
   // Borrar un producto
   static async deleteProduct(id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new Error("ID inválido.")
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error("ID inválido.")
+      }
+      const result = await productosModelo.deleteOne({ _id: id });
+      if (result.deletedCount === 0) {
+        throw new Error("Producto no encontrado.")
+      };
+      return result;
+    } catch (error) {
+      return {error : error.message}
     }
-  ;
-    const result = await productosModelo.deleteOne({ _id: id });
-    if (result.deletedCount === 0) {
-      throw new Error("Producto no encontrado.")
-    };
-    return result;
   }
   
 }

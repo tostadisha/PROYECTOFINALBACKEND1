@@ -1,0 +1,76 @@
+<h1>Lista de productos</h1>
+<a class="linkCarrito" href="#">Carrito</a>
+
+<ul>
+  {{#each productos}}
+    <li>
+      <h2>{{name}}</h2>
+      <p><strong>Código:</strong> {{code}}</p>
+      <p><strong>Descripción:</strong> {{description}}</p>
+      <p><strong>Precio:</strong> ${{price}}</p>
+      <p><strong>Stock:</strong> {{stock}}</p>
+    </li>
+    <button class="add-to-cart" data-id="{{_id}}">Añadir al carrito</button>
+  {{/each}}
+</ul>
+<a href="/?page=1">Fir.Pag</a>
+
+{{#if hasPrevPage}}
+  <a href="/?page={{prevPage}}">Prev.Pág.</a>
+{{else}}
+
+{{/if}}
+{{#if hasNextPage}}
+  <a href="/?page={{nextPage}}">Nex.Pág.</a>
+{{else}}
+
+{{/if}}
+
+<a href="/?page={{totalPages}}">Ult.Pag</a>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let idCarrito = localStorage.getItem("idCarrito");
+    
+    if(idCarrito){
+      const carrito = document.querySelector(".linkCarrito");
+      carrito.href = `/carritoUser/${idCarrito}`;
+    }else{
+        if(!idCarrito){
+        alert("Debe proporcionar un ID, para poder comprar.")
+        return
+      }
+      localStorage.setItem("idCarrito", idCarrito);
+    }
+    
+    document.querySelectorAll(".add-to-cart").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const idProducto = button.getAttribute("data-id");
+
+        if (!idProducto) {
+          alert("Error: no se encontró el ID del producto.");
+          return;
+        }
+
+        try {
+          const respuesta = await fetch(`/api/carritos/${idCarrito}/producto/${idProducto}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (respuesta.ok) {
+            alert("Producto añadido al carrito");
+          } else {
+            const error = await respuesta.json();
+            console.error("Error al añadir producto:", error , error.message);
+            alert("No se pudo añadir el producto al carrito.");
+          }
+        } catch (error) {
+          console.error("Error al conectar con el servidor:", error);
+          alert("Hubo un error al conectar con el servidor.");
+        }
+      });
+    });
+  });
+</script>

@@ -1,3 +1,4 @@
+import mongoose, { isValidObjectId } from "mongoose";
 import { carritosModelo } from "./models/carritos.model.js";
 
 export class CarritosManager {
@@ -16,19 +17,28 @@ export class CarritosManager {
   }
   // Para actualizar algun producto de un carrito
   static async updateCarrito(idCarrito, idProducto) {
-    return await carritosModelo.findByIdAndUpdate(
-      idCarrito,
-      { productos: idProducto.productos },
-      { new: true }
-    );
+    if(mongoose.Types.ObjectId.isValid(idCarrito) && mongoose.Types.ObjectId.isValid(idProducto)){
+      return await carritosModelo.findByIdAndUpdate(
+        idCarrito,
+        { productos: idProducto.productos },
+        { new: true }
+      );
+    }else{
+      throw new Error("Verifique los IDS proporcionados.")
+    }
   }
   // Eliminar un item del carrito (entero)
   static async removeProductFromCart(idCarrito, idProducto) {
+    const carrito = await this.getById(idCarrito);
+    if (!carrito) throw new Error("Carrito no encontrado.");
+    const productExist = carrito.productos.some((p) => p.id.equals(idProducto));
+    if (!productExist) throw new Error("Producto no encontrado en el carrito.");
     return await carritosModelo.findByIdAndUpdate(
-      idCarrito,
-      { $pull: { productos: { id: idProducto } } },
-      { new: true }
-    );
+    idCarrito,
+    { $pull: { productos: { id: idProducto } } },
+    { new: true }
+);
+
   }
   // Recibir un nuevo carrito y modificar el carrito especificado
   static async exchangeCart(idCarrito, nuevoCarrito) {
@@ -44,9 +54,11 @@ export class CarritosManager {
   static async changeQuantityFromCart(idCarrito, idProducto, quantity) {
     try {
       let carritoActual = await this.getById(idCarrito);
+      console.log(`El carrito actual es ${carritoActual}`)
       let productExist = carritoActual.productos.find((e) =>
         e.id.equals(idProducto)
       );
+      console.log(`El valor de product exist es: ${productExist}`)
 
       if (productExist) {
         productExist.cantidad = quantity;

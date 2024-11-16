@@ -4,6 +4,7 @@ import { CarritosManager } from "../dao/CartsManager.js"
 
 const router = Router();
 
+// Conseguir los productos, modificado por paginate
 router.get("/", async (req, res) => {
   let { page, limit, sort, filter } = req.query;
   
@@ -25,11 +26,11 @@ router.get("/", async (req, res) => {
     res.status(500).send("Error al obtener los productos");
   }
 });
-
+// Conseguir el carrito especificado en el prompt
 router.get("/carritoUser/:cid", async (req, res) => {
   const { cid } = req.params;
   try {
-    const carrito = await CarritosManager.findById(cid); // Asegúrate de que CarritosManager esté bien configurado
+    const carrito = await CarritosManager.findById(cid);
 
     if (!carrito) {
       return res.status(404).json({ message: "Carrito no encontrado" });

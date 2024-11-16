@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ProductosManager } from "../dao/ProductsManager.js";
 const router = Router();
+// Conseguir los productos con paginate
 router.get("/", async (req, res) => {
   try {
     let {limit, page, filter, sort} = req.query
@@ -12,6 +13,7 @@ router.get("/", async (req, res) => {
     return res.status(500).json({ error: `${error.message}` });
   }
 });
+// Crear un producto
 router.post("/", async (req, res) => {
   try {
     const { body } = req;
@@ -28,6 +30,7 @@ router.post("/", async (req, res) => {
     });
   }
 });
+// Updatear un producto
 router.put("/:pid", async (req, res) => {
   try {
     const { pid } = req.params;
@@ -49,6 +52,7 @@ router.put("/:pid", async (req, res) => {
     });
   }
 });
+// Borrar un producto
 router.delete("/:pid", async (req, res) => {
   try {
     const { pid } = req.params;

@@ -7,6 +7,14 @@ export class CarritosManager {
     let carritoNuevo = await carritosModelo.create({ productos: [] });
     return carritoNuevo.toJSON();
   }
+  // Ver todos los carritos (sin populate)
+  static async getAllCarritos(){
+    try {
+      return await carritosModelo.find()
+    } catch (error) {
+      throw new Error (`Ocurrió un error : ${error.message}`)
+    }
+  }
   // Para conseguir el carrito en crudo, sin el populate
   static async getById(id) {
     try {

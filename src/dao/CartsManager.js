@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import mongoose from "mongoose";
 import { carritosModelo } from "./models/carritos.model.js";
 
 export class CarritosManager {

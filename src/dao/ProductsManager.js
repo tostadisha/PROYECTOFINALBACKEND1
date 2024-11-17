@@ -1,4 +1,5 @@
 import { productosModelo } from "./models/productos.model.js";
+import mongoose from "mongoose";
 
 export class ProductosManager {
   // Conseguir los producto con cierto parámetros (paginate)
@@ -25,7 +26,23 @@ export class ProductosManager {
       if(!mongoose.Types.ObjectId.isValid(id)){
         throw new Error("El ID proporcionada no es válida")
       }
+      const camposSchema =  Object.keys(productosModelo.schema.paths)
+      const camposModificados = Object.keys(productoModificado)
+      let esValido = false
+      console.log(esValido)
+      camposModificados.forEach((e) =>{
+        camposSchema.forEach((x)=>{
+          if(e===x){
+            esValido = true
+          }
+        })
+      })
+      console.log(`Los campos buscados son ${camposSchema} y los que se quieren modiciar son ${camposModificados}`);
+      if(esValido){
         return await productosModelo.updateOne({ _id: id }, productoModificado);
+      }else{
+        throw new Error("El key que usted ha proporcionado no está en el schema")
+      };
     } catch (error) {
       return {error: error.message}
     }

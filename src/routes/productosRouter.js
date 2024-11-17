@@ -35,7 +35,7 @@ router.put("/:pid", async (req, res) => {
     const { pid } = req.params;
     const { body } = req;
     const response = await ProductosManager.updateOneProduct(body, pid);
-    res.setHeader("Content-type", "text/plain");
+    res.setHeader("Content-type", "application/json");
     return res
       .status(200)
       .send(
@@ -56,11 +56,16 @@ router.delete("/:pid", async (req, res) => {
   try {
     const { pid } = req.params;
     const response = await ProductosManager.deleteProduct(pid);
-    res.setHeader("Content-type", "text/plain");
-    return res.status(200).send({
-      message: `Su producto ha sido eliminado.`,
-      response: response,
-    });
+    console.log(response)
+    res.setHeader("Content-type", "application/json");
+    if(response.error){
+      throw new Error(`Hubo un problema al eliminar el producto: ${response.error}`)
+    }else{
+      return res.status(200).send({
+        message: `Su producto ha sido eliminado.`,
+        response: response,
+      });
+    }
   } catch (error) {
     res.setHeader("Content-Type", "application/json");
     return res.status(404).json({ error: error.message });

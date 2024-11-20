@@ -171,6 +171,10 @@ router.put("/:cid", async (req, res) => {
   try {
     const { cid } = req.params;
     const body = req.body;
+    let existe = await CarritosManager.getById(cid);
+    if (!existe || Object.keys(existe).length === 0) {
+      throw new Error("El carrito que ha ingresado no existe");
+    }
     let nuevoCarrito = await CarritosManager.exchangeCart(cid, body);
     return res.status(201).send(nuevoCarrito);
   } catch (error) {

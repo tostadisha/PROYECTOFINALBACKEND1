@@ -51,7 +51,6 @@ router.get("/carts/:cid", async (req, res) => {
   const { cid } = req.params;
   try {
     const carrito = await CarritosManager.findById(cid);
-  console.log(carrito)
     if (!carrito) {
       return res.status(404).json({ message: "Carrito no encontrado" });
     }

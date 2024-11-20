@@ -87,6 +87,9 @@ router.get("/temporary/:cid", async (req, res) => {
   try {
     let { cid } = req.params;
     let carrito = await CarritosManager.getById(cid);
+    if (!carrito) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
     res.setHeader("Content-type", "application/json");
     return res.status(200).send(carrito);
   } catch (error) {

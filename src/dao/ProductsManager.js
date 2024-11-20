@@ -27,26 +27,26 @@ export class ProductosManager {
         lean: true,
         sort,
       });
-      response.docs.forEach(product => {
+      response.docs.forEach((product) => {
         delete product.id;
-      }); 
+      });
+      console.log(sort)
       const checkParams = {
         sort: sort === "price" ? "asc" : sort === "-price" ? "desc" : null,
       };
-      console.log(response)
-      const prevLink = response.hasPrevPage
+      let prevLink = response.hasPrevPage
         ? `http://localhost:3000/api/products/?${
             checkParams.sort ? `sort=${checkParams.sort}&` : ""
           }${category ? `category=${category}&` : ""}${
             stock ? `stock=${stock}&` : ""
-          }limit=${limit}&page=${page - 1}`
+          }${limit === 10 ? "" : `limit=${limit}`}&page=${page - 1}`
         : null;
-      const nextLink = response.hasNextPage
+      let nextLink = response.hasNextPage
         ? `http://localhost:3000/api/products/?${
             checkParams.sort ? `sort=${checkParams.sort}&` : ""
           }${category ? `category=${category}&` : ""}${
             stock ? `stock=${stock}&` : ""
-          }limit=${limit}&page=${page + 1}`
+          }${limit === 10 ? "" : `limit=${limit}`}&page=${page + 1}`
         : null;
       let responsePedida = {
         status: "success",
@@ -60,7 +60,6 @@ export class ProductosManager {
         prevLink: prevLink,
         nextLink: nextLink,
       };
-      console.log(responsePedida);
       return responsePedida;
     } catch (error) {
       return { error: error.message };
@@ -72,9 +71,70 @@ export class ProductosManager {
   }
   // Crear un producto
   static async createProduct(productos = []) {
+    // Obtener los campos requeridos del schema
+    const camposRequeridos = Object.keys(productosModelo.schema.paths).filter(
+      (e) => productosModelo.schema.paths[e].isRequired
+    );
+
+    // Obtener los campos permitidos (todos los campos definidos en el schema sin contar los que nos da mongoose)
+    const camposPermitidos = Object.keys(productosModelo.schema.paths).filter(
+      (e) => !["_id", "createdAt", "updatedAt", "__v"].includes(e)
+    );
     if (Array.isArray(productos)) {
+      const errores = [];
+
+      productos.forEach((product, index) => {
+        // Verificar campos requeridos
+        const keysComparadas = camposRequeridos.filter(
+          (e) => !Object.keys(product).includes(e)
+        );
+        if (keysComparadas.length > 0) {
+          errores.push(
+            `Revise los atributos ingresados en su producto n° ${
+              index + 1
+            } faltan los atributos: ${keysComparadas.join(", ")}.`
+          );
+        }
+
+        // Verificar campos extra (no permitidos)
+        const keysExtra = Object.keys(product).filter(
+          (e) => !camposPermitidos.includes(e)
+        );
+        if (keysExtra.length > 0) {
+          errores.push(
+            `En el producto n° ${
+              index + 1
+            } los siguientes atributos no son válidos: ${keysExtra.join(", ")}.`
+          );
+        }
+      });
+
+      if (errores.length > 0) {
+        throw new Error(errores.join(" \\ "));
+      }
+
       return await productosModelo.insertMany(productos);
     } else {
+      // Verificar campos requeridos
+      const keysComparadas = camposRequeridos.filter((e) => !(e in productos));
+      if (keysComparadas.length > 0) {
+        throw new Error(
+          `Revise los atributos ingresados, faltan los atributos: ${keysComparadas.join(
+            ", "
+          )}`
+        );
+      }
+
+      // Verificar campos extra
+      const keysExtra = Object.keys(productos).filter(
+        (key) => !camposPermitidos.includes(key)
+      );
+      if (keysExtra.length > 0) {
+        throw new Error(
+          `Los siguientes atributos no son válidos: ${keysExtra.join(", ")}`
+        );
+      }
+
       return await productosModelo.create(productos);
     }
   }
@@ -84,10 +144,13 @@ export class ProductosManager {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error("El ID proporcionada no es válida");
       }
+      const productoObjetivo = await productosModelo.findById(id);
+      if (!productoObjetivo) {
+        throw new Error("El producto no existe");
+      }
       const camposSchema = Object.keys(productosModelo.schema.paths);
       const camposModificados = Object.keys(productoModificado);
       let esValido = false;
-      console.log(esValido);
       camposModificados.forEach((e) => {
         camposSchema.forEach((x) => {
           if (e === x) {

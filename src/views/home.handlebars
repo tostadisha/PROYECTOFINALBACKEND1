@@ -1,5 +1,7 @@
 <h1>Lista de productos</h1>
 <a class="linkCarrito" href="#">Carrito</a>
+<input class="carritoIdInput" type="text" placeholder="Introduce el ID del carrito">
+<button class="addCarritoId">Elegir</button>
 
 <ul>
   {{#each productos}}
@@ -13,18 +15,91 @@
     <button class="add-to-cart" data-id="{{_id}}">Añadir al carrito</button>
   {{/each}}
 </ul>
-<a href="/?page=1">Fir.Pag</a>
+
+<a href="/products/">Home</a>
 
 {{#if hasPrevPage}}
-  <a href="/?page={{prevPage}}">Prev.Pág.</a>
+  <a href="{{modifiedPrevLink}}">Prev.Pág.</a>
 {{else}}
-
 {{/if}}
 {{#if hasNextPage}}
-  <a href="/?page={{nextPage}}">Nex.Pág.</a>
+  <a href="{{modifiedNextLink}}">Nex.Pág.</a>
 {{else}}
-
 {{/if}}
 
-<a href="/?page={{totalPages}}">Ult.Pag</a>
 
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const carritoIdInput = document.querySelector(".carritoIdInput");
+    const addCarritoIdButton = document.querySelector(".addCarritoId");
+    const carritoLink = document.querySelector(".linkCarrito");
+    // Cuando de click al boton del elegir el carrito
+    addCarritoIdButton.addEventListener("click", async () => {
+      let idCarrito = carritoIdInput.value.trim(); // Obtener el valor del input
+      if (!idCarrito) {
+        alert("Debe proporcionar un ID de carrito.");
+        return;
+      }
+
+      try {
+        // Verificar si el carrito existe en el servidor
+        const respuesta = await fetch(`/api/carts/${idCarrito}`);
+        if (!respuesta.ok) {
+          alert("El carrito no existe, por lo que no podrá usar el carrito.");
+          return;
+        }
+        // Guardo o sobre-escribo en el localStorage cosa de que no se me pierda si cambio de pagina
+        localStorage.setItem("idCarrito", idCarrito);
+        // Actualizar el enlace del carrito con el nuevo ID
+        if (carritoLink) {
+          carritoLink.href = `/carts/${idCarrito}`;
+        }
+        alert("Carrito actualizado correctamente.");
+      } catch (error) {
+        console.error("Error al verificar el carrito:", error.message);
+        alert("Hubo un error al verificar el carrito.");
+      }
+    });
+    // Añadir productos al carrito
+    document.querySelectorAll(".add-to-cart").forEach((button) => {
+      button.addEventListener("click", async () => {
+        // Pido devuelta el id del carrito desde el local storage
+        let idCarrito = localStorage.getItem("idCarrito");
+        if (!idCarrito) {
+          alert("Usted no tiene carrito asignado. Primero debe elegir un carrito.");
+          return;
+        }
+        const idProducto = button.getAttribute("data-id");
+        if (!idProducto) {
+          alert("Error: no se encontró el ID del producto.");
+          return;
+        }
+        try {
+          const respuesta = await fetch(`/api/carts/${idCarrito}/products/${idProducto}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (respuesta.ok) {
+            alert("Producto añadido al carrito.");
+          } else {
+            const error = await respuesta.json();
+            console.error("Error al añadir producto:", error, error.message);
+            alert("No se pudo añadir el producto al carrito.");
+          }
+        } catch (error) {
+          console.error("Error al conectar con el servidor:", error.message);
+          alert("Hubo un error al conectar con el servidor.");
+        }
+      });
+    });
+
+    // Comprobamos si el carrito existe en el localStorage y actualizamos el enlace del carrito
+    let idCarrito = localStorage.getItem("idCarrito");
+    if (idCarrito) {
+      carritoLink.href = `/carts/${idCarrito}`;
+    }
+  });
+</script>

@@ -7,36 +7,43 @@ const router = Router();
 // Crear carrito
 router.post("/", async (req, res) => {
   try {
-    let nuevoCarrito = await CarritosManager.createCarrito();
-    res.setHeader("Content-type", "application/json");
+    const body = req.body;
+    if (!body) {
+      let nuevoCarrito = await CarritosManager.createCarrito();
+      res.setHeader("Content-type", "application/json");
+      return res.status(201).send(nuevoCarrito);
+    }
+    let nuevoCarrito = await CarritosManager.createCarritoWithProducts(body);
     return res.status(201).send(nuevoCarrito);
   } catch (error) {
     res.setHeader("Content-Type", "application/json");
-    return res.status(400).json({ error: `` });
+    return res
+      .status(400)
+      .json({ message: "Ha ocurrido un error", error: error.message });
   }
 });
 // Ver todos los carritos
-router.get("/", async(req,res)=>{
+router.get("/", async (req, res) => {
   try {
-    let carritos = await CarritosManager.getAllCarritos()
-    res.setHeader('Content-type', 'application/json')
-    return res.status(200).send(carritos)
+    let carritos = await CarritosManager.getAllCarritos();
+    res.setHeader("Content-type", "application/json");
+    return res.status(200).send(carritos);
   } catch (error) {
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(400).json({error: error.message})
+    res.setHeader("Content-Type", "application/json");
+    return res.status(400).json({ error: error.message });
   }
-})
+});
 // Borrar items del carrito
-router.delete("/:cid", async(req,res)=>{
-  const { cid } = req.params
-try {
-  let carritoBorrado = await CarritosManager.deleteById(cid)
-  res.setHeader('Content-type', 'application/json')
-  return res.status(200).send(carritoBorrado)
-} catch (error) {
-  res.setHeader('Content-Type', 'application/json');
-  return res.status(400).json({error:error.message})
-}
+router.delete("/:cid", async (req, res) => {
+  const { cid } = req.params;
+  try {
+    let carritoBorrado = await CarritosManager.deleteById(cid);
+    res.setHeader("Content-type", "application/json");
+    return res.status(200).send(carritoBorrado);
+  } catch (error) {
+    res.setHeader("Content-Type", "application/json");
+    return res.status(400).json({ error: error.message });
+  }
 });
 // Añadir producto al carrito seleccionado
 router.post("/:cid/products/:pid", async (req, res) => {
@@ -44,15 +51,15 @@ router.post("/:cid/products/:pid", async (req, res) => {
   if (!isValidObjectId(cid) || !isValidObjectId(pid)) {
     res.setHeader("Content-Type", "application/json");
     return res.status(400).json({ error: `Id proporcionado inválido` });
-  } 
+  }
   try {
     let carrito = await CarritosManager.getById(cid);
-    if (!carrito) {
+    if (!carrito || carrito.length === 0) {
       res.setHeader("Content-Type", "application/json");
       return res.status(400).json({ error: `Su carrito no existe` });
     }
     let producto = await ProductosManager.getProductsBy({ _id: pid });
-    if (!producto) {
+    if (!producto || producto.length === 0) {
       res.setHeader("Content-Type", "application/json");
       return res.status(400).json({ error: `Su producto no existe` });
     }
@@ -65,7 +72,7 @@ router.post("/:cid/products/:pid", async (req, res) => {
         quantity: 1,
       });
     } else {
-      productSearch.quantity += 1
+      productSearch.quantity += 1;
     }
     let carritoActualizado = await CarritosManager.updateCarrito(cid, carrito);
     res.setHeader("Content-type", "application/json");
@@ -92,20 +99,17 @@ router.get("/:cid", async (req, res) => {
   const { cid } = req.params;
   try {
     const carrito = await CarritosManager.findById(cid);
-    console.log(carrito)
     if (!carrito) {
       return res.status(404).json({ message: "Carrito no encontrado" });
     }
-    const carritoOrdenado = carrito.products.map(e => ({
+    const carritoOrdenado = carrito.products.map((e) => ({
       nombre: e.product.title,
       descripcion: e.product.description,
-      cantidad: e.quantity
+      cantidad: e.quantity,
     }));
-    
 
     res.json(carritoOrdenado);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error al obtener el carrito" });
   }
 });
@@ -134,8 +138,12 @@ router.delete("/:cid/products/:pid", async (req, res) => {
     }
 
     res.setHeader("Content-Type", "application/json");
-    return res.status(200).json({message: "Su producto se ha eliminado correctamente",
-      response: carritoActualizado});
+    return res
+      .status(200)
+      .json({
+        message: "Su producto se ha eliminado correctamente",
+        response: carritoActualizado,
+      });
   } catch (error) {
     res.setHeader("Content-Type", "application/json");
     return res.status(400).json({ error: error.message });
@@ -152,13 +160,22 @@ router.put("/:cid/products/:pid", async (req, res) => {
       quantity
     );
     res.setHeader("Content-Type", "application/json");
-    return res.status(200).send({status: "success",
-      payload: carrito
-    });
+    return res.status(200).send({ status: "success", payload: carrito });
   } catch (error) {
     res.setHeader("Content-Type", "application/json");
     return res.status(400).json({ error: error.message });
   }
 });
-
+// Cambiar un arreglo de productos por otro arreglo
+router.put("/:cid", async (req, res) => {
+  try {
+    const { cid } = req.params;
+    const body = req.body;
+    let nuevoCarrito = await CarritosManager.exchangeCart(cid, body);
+    return res.status(201).send(nuevoCarrito);
+  } catch (error) {
+    res.setHeader("Content-Type", "application/json");
+    return res.status(400).json({ error: error.message });
+  }
+});
 export default router;

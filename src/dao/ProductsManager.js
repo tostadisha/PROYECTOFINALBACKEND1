@@ -30,7 +30,6 @@ export class ProductosManager {
       response.docs.forEach((product) => {
         delete product.id;
       });
-      console.log(sort)
       const checkParams = {
         sort: sort === "price" ? "asc" : sort === "-price" ? "desc" : null,
       };

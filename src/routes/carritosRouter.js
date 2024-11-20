@@ -8,7 +8,7 @@ const router = Router();
 router.post("/", async (req, res) => {
   try {
     const body = req.body;
-    if (!body) {
+    if (!body || body.length === 0 || Object.keys(body).length === 0) {
       let nuevoCarrito = await CarritosManager.createCarrito();
       res.setHeader("Content-type", "application/json");
       return res.status(201).send(nuevoCarrito);
